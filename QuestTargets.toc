@@ -1,5 +1,7 @@
 ## Interface: 16001
 ## Title: QuestTargets
+## Author: Pwizzlard
+## Version: 1.0.0
 ## Notes: RestedXP-style target and quest item buttons for your selected quest
 ## OptionalDeps: QuestieDB, Questie
 ## SavedVariables: QuestTargetsDB

@@ -16,12 +16,12 @@ Copy this folder to `World of Warcraft/_forever_/Interface/AddOns/QuestQuarry`.
 ## Commands
 
 ```
-/qt add [Name, Name...]   add manual targets (no name = current target)
-/qt item <link or id>     add a manual item
-/qt del <name or item>    remove a manual entry
-/qt clear                 clear manual entries
-/qt pin | unpin           pin selected quest / clear all pins
-/qt follow                always show the selected quest (default on)
-/qt auto                  toggle quest-based targets
-/qt mark                  toggle skull marking
+/qq add [Name, Name...]   add manual targets (no name = current target)
+/qq item <link or id>     add a manual item
+/qq del <name or item>    remove a manual entry
+/qq clear                 clear manual entries
+/qq pin | unpin           pin selected quest / clear all pins
+/qq follow                always show the selected quest (default on)
+/qq auto                  toggle quest-based targets
+/qq mark                  toggle skull marking
 ```

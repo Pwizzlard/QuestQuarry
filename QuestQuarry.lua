@@ -1,5 +1,5 @@
 -- QuestQuarry: RestedXP-style target + quest item buttons for pinned quests + the selected quest.
--- Auto data comes from QuestieDB (LibQuestieDB) when loaded; manual entries via /qt.
+-- Auto data comes from QuestieDB (LibQuestieDB) when loaded; manual entries via /qq.
 
 local f = CreateFrame("Frame", "QuestQuarryFrame", UIParent, "BackdropTemplate")
 local DB, Pins, QDB
@@ -421,7 +421,7 @@ f:SetScript("OnEvent", function(_, e, arg)
   end
 end)
 
-SLASH_QUESTQUARRY1, SLASH_QUESTQUARRY2 = "/qt", "/questquarry"
+SLASH_QUESTQUARRY1, SLASH_QUESTQUARRY2 = "/qq", "/questquarry"
 SlashCmdList.QUESTQUARRY = function(msg)
   local cmd, arg = msg:match("^(%S*)%s*(.-)%s*$")
   cmd = cmd:lower()
@@ -450,8 +450,8 @@ SlashCmdList.QUESTQUARRY = function(msg)
   elseif cmd == "mark" then
     DB.mark = not DB.mark; print("QuestQuarry skull marking:", DB.mark)
   else
-    print("|cff33ff99QuestQuarry|r /qt add [Name, Name...] (no name = current target) | item <link or id> | del <name/item> | clear")
-    print("  /qt pin (pin selected quest, up to " .. MAX_PINS .. ") | unpin (clear all pins) | follow | auto | mark")
+    print("|cff33ff99QuestQuarry|r /qq add [Name, Name...] (no name = current target) | item <link or id> | del <name/item> | clear")
+    print("  /qq pin (pin selected quest, up to " .. MAX_PINS .. ") | unpin (clear all pins) | follow | auto | mark")
     print("Manual targets: " .. table.concat(DB.targets, ", ") .. "  items: " .. table.concat(DB.items, ", "))
     print("QuestieDB: " .. (QDB and "found" or "not found (kill objectives only)"))
   end

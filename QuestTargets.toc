@@ -1,0 +1,8 @@
+## Interface: 16001
+## Title: QuestTargets
+## Notes: RestedXP-style target and quest item buttons for your selected quest
+## OptionalDeps: QuestieDB, Questie
+## SavedVariables: QuestTargetsDB
+## SavedVariablesPerCharacter: QuestTargetsPins
+
+QuestTargets.lua

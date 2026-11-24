@@ -1,7 +1,7 @@
--- QuestTargets: RestedXP-style target + quest item buttons for pinned quests + the selected quest.
+-- QuestQuarry: RestedXP-style target + quest item buttons for pinned quests + the selected quest.
 -- Auto data comes from QuestieDB (LibQuestieDB) when loaded; manual entries via /qt.
 
-local f = CreateFrame("Frame", "QuestTargetsFrame", UIParent, "BackdropTemplate")
+local f = CreateFrame("Frame", "QuestQuarryFrame", UIParent, "BackdropTemplate")
 local DB, Pins, QDB
 local tBtns, iBtns, headers, pending, queued = {}, {}, {}, false, false
 local ROW, PAD, W, MAX_PINS = 20, 6, 182, 5
@@ -55,7 +55,7 @@ end
 
 local function Pin(id)
   if not id or IsPinned(id) then return end
-  if #Pins >= MAX_PINS then print("QuestTargets: all " .. MAX_PINS .. " slots full, unpin one first"); return end
+  if #Pins >= MAX_PINS then print("QuestQuarry: all " .. MAX_PINS .. " slots full, unpin one first"); return end
   tinsert(Pins, id)
 end
 
@@ -179,7 +179,7 @@ local function Header(i)
 end
 
 local function TargetButton(i)
-  local b = CreateFrame("Button", "QuestTargetsT" .. i, f, "SecureActionButtonTemplate")
+  local b = CreateFrame("Button", "QuestQuarryT" .. i, f, "SecureActionButtonTemplate")
   b:SetSize(W - PAD * 2, 18)
   b:RegisterForClicks("AnyUp", "AnyDown")
   b:SetAttribute("type", "macro")
@@ -193,7 +193,7 @@ local function TargetButton(i)
 end
 
 local function ItemButton(i)
-  local b = CreateFrame("Button", "QuestTargetsI" .. i, f, "SecureActionButtonTemplate")
+  local b = CreateFrame("Button", "QuestQuarryI" .. i, f, "SecureActionButtonTemplate")
   b:SetSize(30, 30)
   b:RegisterForClicks("AnyUp", "AnyDown")
   b:SetAttribute("type", "item")
@@ -239,13 +239,13 @@ local function CycleButton(name, parent)
 end
 
 -- Invisible one for Tab / the keybind (on UIParent so it works even when the box is hidden).
-local cyc = CycleButton("QuestTargetsCycle", UIParent)
+local cyc = CycleButton("QuestQuarryCycle", UIParent)
 cyc:SetSize(1, 1)
 cyc:SetPoint("CENTER")
 cyc:EnableMouse(false)
 
 -- Clickable one on the box.
-local nextBtn = CycleButton("QuestTargetsNext", f)
+local nextBtn = CycleButton("QuestQuarryNext", f)
 nextBtn:SetSize(80, 16)
 nextBtn:SetPoint("TOPRIGHT", f, "BOTTOMRIGHT", -4, 2)
 nextBtn:SetNormalFontObject("GameFontHighlightSmall")
@@ -268,13 +268,13 @@ for _, b in ipairs({ cyc, nextBtn }) do
   end)
 end
 
-BINDING_HEADER_QUESTTARGETS = "QuestTargets"
-_G["BINDING_NAME_CLICK QuestTargetsCycle:LeftButton"] = "Target next quest enemy"
+BINDING_HEADER_QUESTQUARRY = "QuestQuarry"
+_G["BINDING_NAME_CLICK QuestQuarryCycle:LeftButton"] = "Target next quest enemy"
 
 -- Checkbox: temporarily point Tab at the cycle button (override binding; saved keybinds untouched).
 local function ApplyTab()
   ClearOverrideBindings(cyc)
-  if DB.tab then SetOverrideBindingClick(cyc, true, "TAB", "QuestTargetsCycle", "LeftButton") end
+  if DB.tab then SetOverrideBindingClick(cyc, true, "TAB", "QuestQuarryCycle", "LeftButton") end
 end
 
 local tabBox = CreateFrame("CheckButton", nil, f, "UICheckButtonTemplate")
@@ -285,7 +285,7 @@ tabBox.label:SetPoint("RIGHT", tabBox, "LEFT", -1, 0)
 tabBox.label:SetText("Quest Only Tab")
 tabBox:SetScript("OnClick", function(s)
   if InCombatLockdown() then
-    s:SetChecked(DB.tab); print("QuestTargets: can't change Tab in combat"); return
+    s:SetChecked(DB.tab); print("QuestQuarry: can't change Tab in combat"); return
   end
   DB.tab = s:GetChecked() and true or false
   ApplyTab()
@@ -388,11 +388,11 @@ end)
 f:RegisterEvent("ADDON_LOADED")
 f:SetScript("OnEvent", function(_, e, arg)
   if e == "ADDON_LOADED" then
-    if arg ~= "QuestTargets" then return end
+    if arg ~= "QuestQuarry" then return end
     f:UnregisterEvent("ADDON_LOADED")
-    QuestTargetsDB = QuestTargetsDB or {}
-    QuestTargetsPins = QuestTargetsPins or {}
-    DB, Pins = QuestTargetsDB, QuestTargetsPins
+    QuestQuarryDB = QuestQuarryDB or {}
+    QuestQuarryPins = QuestQuarryPins or {}
+    DB, Pins = QuestQuarryDB, QuestQuarryPins
     DB.targets, DB.items = DB.targets or {}, DB.items or {}
     if DB.auto == nil then DB.auto = true end
     if DB.mark == nil then DB.mark = true end
@@ -421,8 +421,8 @@ f:SetScript("OnEvent", function(_, e, arg)
   end
 end)
 
-SLASH_QUESTTARGETS1, SLASH_QUESTTARGETS2 = "/qt", "/questtargets"
-SlashCmdList.QUESTTARGETS = function(msg)
+SLASH_QUESTQUARRY1, SLASH_QUESTQUARRY2 = "/qt", "/questquarry"
+SlashCmdList.QUESTQUARRY = function(msg)
   local cmd, arg = msg:match("^(%S*)%s*(.-)%s*$")
   cmd = cmd:lower()
   local id = tonumber(arg:match("item:(%d+)") or arg)
@@ -444,13 +444,13 @@ SlashCmdList.QUESTTARGETS = function(msg)
   elseif cmd == "unpin" then
     wipe(Pins)
   elseif cmd == "auto" then
-    DB.auto = not DB.auto; print("QuestTargets auto from quest:", DB.auto)
+    DB.auto = not DB.auto; print("QuestQuarry auto from quest:", DB.auto)
   elseif cmd == "follow" then
-    DB.follow = not DB.follow; print("QuestTargets always show selected quest (off = only while quest log/map is open):", DB.follow)
+    DB.follow = not DB.follow; print("QuestQuarry always show selected quest (off = only while quest log/map is open):", DB.follow)
   elseif cmd == "mark" then
-    DB.mark = not DB.mark; print("QuestTargets skull marking:", DB.mark)
+    DB.mark = not DB.mark; print("QuestQuarry skull marking:", DB.mark)
   else
-    print("|cff33ff99QuestTargets|r /qt add [Name, Name...] (no name = current target) | item <link or id> | del <name/item> | clear")
+    print("|cff33ff99QuestQuarry|r /qt add [Name, Name...] (no name = current target) | item <link or id> | del <name/item> | clear")
     print("  /qt pin (pin selected quest, up to " .. MAX_PINS .. ") | unpin (clear all pins) | follow | auto | mark")
     print("Manual targets: " .. table.concat(DB.targets, ", ") .. "  items: " .. table.concat(DB.items, ", "))
     print("QuestieDB: " .. (QDB and "found" or "not found (kill objectives only)"))

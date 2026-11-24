@@ -1,4 +1,4 @@
-# QuestTargets
+# QuestQuarry
 
 RestedXP-style target and quest item buttons for WoW Classic "Forever" (interface 16001).
 Uses [Questie](https://github.com/Questie/Questie)'s QuestieDB when installed.
@@ -11,7 +11,7 @@ Uses [Questie](https://github.com/Questie/Questie)'s QuestieDB when installed.
 
 ## Install
 
-Copy this folder to `World of Warcraft/_forever_/Interface/AddOns/QuestTargets`.
+Copy this folder to `World of Warcraft/_forever_/Interface/AddOns/QuestQuarry`.
 
 ## Commands
 

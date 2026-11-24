@@ -1,10 +1,10 @@
 ## Interface: 16001
-## Title: QuestTargets
+## Title: QuestQuarry
 ## Author: Pwizzlard
-## Version: 1.0.1
+## Version: 1.0.2
 ## Notes: RestedXP-style target and quest item buttons for your selected quest
 ## OptionalDeps: QuestieDB, Questie
-## SavedVariables: QuestTargetsDB
-## SavedVariablesPerCharacter: QuestTargetsPins
+## SavedVariables: QuestQuarryDB
+## SavedVariablesPerCharacter: QuestQuarryPins
 
-QuestTargets.lua
+QuestQuarry.lua

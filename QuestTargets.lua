@@ -217,15 +217,16 @@ local CYCLE_SNIPPET = [[
   if down then -- advance once per press (down + up both arrive)
     local i = (self:GetAttribute("idx") or 0) % n + 1
     self:SetAttribute("idx", i)
-    -- start at the next name; if it isn't around, fall through to the following ones (max 4)
-    local c = n
-    if c > 4 then c = 4 end
-    local m = "/cleartarget"
-    for k = 0, c - 1 do
-      m = m .. "\n/targetexact " .. (k > 0 and "[noexists] " or "")
-        .. self:GetAttribute("name" .. ((i - 1 + k) % n + 1)) .. "\n/cleartarget [dead]"
+    -- start at the next name; if nothing (alive) was found, fall through to the following ones,
+    -- as many as fit in WoW's 255-character macro limit
+    local tail = "\n/cleartarget [dead]" .. self:GetAttribute("suffix")
+    local m = "/cleartarget\n/targetexact " .. self:GetAttribute("name" .. i)
+    for k = 1, n - 1 do
+      local line = "\n/targetexact [noexists][dead] " .. self:GetAttribute("name" .. ((i - 1 + k) % n + 1))
+      if #m + #line + #tail > 255 then break end
+      m = m .. line
     end
-    self:SetAttribute("macrotext", m .. self:GetAttribute("suffix"))
+    self:SetAttribute("macrotext", m .. tail)
   end
 ]]
 
@@ -250,6 +251,22 @@ nextBtn:SetPoint("TOPRIGHT", f, "BOTTOMRIGHT", -4, 2)
 nextBtn:SetNormalFontObject("GameFontHighlightSmall")
 nextBtn:SetHighlightFontObject("GameFontNormalSmall")
 nextBtn:SetText("Next target >")
+
+-- After a press (out of combat only: attributes are locked in combat), make the next press start
+-- right after the name just found, so it alternates between nearby quest mobs instead of
+-- re-finding the same one while the rotation walks through names that aren't around.
+for _, b in ipairs({ cyc, nextBtn }) do
+  b:HookScript("OnClick", function(s)
+    if InCombatLockdown() or not UnitExists("target") then return end
+    local name = UnitName("target")
+    for i = 1, s:GetAttribute("count") or 0 do
+      if s:GetAttribute("name" .. i) == name then
+        cyc:SetAttribute("idx", i); nextBtn:SetAttribute("idx", i)
+        return
+      end
+    end
+  end)
+end
 
 BINDING_HEADER_QUESTTARGETS = "QuestTargets"
 _G["BINDING_NAME_CLICK QuestTargetsCycle:LeftButton"] = "Target next quest enemy"

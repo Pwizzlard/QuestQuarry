@@ -1,6 +1,6 @@
 # QuestQuarry
 
-RestedXP-style target and quest item buttons for WoW Classic "Forever" (interface 16001).
+Target and quest item buttons for your selected quest in WoW Forever.
 Uses [Questie](https://github.com/Questie/Questie)'s QuestieDB when installed.
 
 - Skull rows target and mark the mobs for your pinned and selected quests (kill, loot-drop and kill-credit objectives).

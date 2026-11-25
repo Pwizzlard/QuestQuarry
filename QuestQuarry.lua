@@ -1,4 +1,3 @@
--- QuestQuarry: RestedXP-style target + quest item buttons for pinned quests + the selected quest.
 -- Auto data comes from QuestieDB (LibQuestieDB) when loaded; manual entries via /qq.
 
 local f = CreateFrame("Frame", "QuestQuarryFrame", UIParent, "BackdropTemplate")

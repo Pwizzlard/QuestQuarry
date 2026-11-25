@@ -2,7 +2,7 @@
 ## Title: QuestQuarry
 ## Author: Pwizzlard
 ## Version: 1.0.3
-## Notes: RestedXP-style target and quest item buttons for your selected quest
+## Notes: Target and quest item buttons for your selected quest
 ## OptionalDeps: QuestieDB, Questie
 ## SavedVariables: QuestQuarryDB
 ## SavedVariablesPerCharacter: QuestQuarryPins

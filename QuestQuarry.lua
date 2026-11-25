@@ -3,10 +3,10 @@ local DB, Pins, QDB
 local tBtns, iBtns, headers, pending, queued = {}, {}, {}, false, false
 local ROW, PAD, W, MAX_PINS = 20, 6, 182, 5
 
-local GetItemCount = C_Item and C_Item.GetItemCount or GetItemCount
-local GetItemIcon = C_Item and C_Item.GetItemIconByID or GetItemIcon
-local GetItemSpell = C_Item and C_Item.GetItemSpell or GetItemSpell
-local GetItemCooldown = C_Container and C_Container.GetItemCooldown or GetItemCooldown
+local GetItemCount = C_Item.GetItemCount
+local GetItemIcon = C_Item.GetItemIconByID
+local GetItemSpell = C_Item.GetItemSpell
+local GetItemCooldown = C_Container.GetItemCooldown
 
 local Build
 
@@ -34,19 +34,10 @@ local function Browsing()
   for _, fr in pairs({ QuestLogExFrame, ClassicQuestLog, QuestLogFrame, WorldMapFrame }) do
     if fr:IsShown() then return true end
   end
-  return false
-end
-
-local function IsPinned(id)
-  for _, p in ipairs(Pins) do if p == id then return true end end
-end
-
-local function Unpin(id)
-  for i = #Pins, 1, -1 do if Pins[i] == id then tremove(Pins, i) end end
 end
 
 local function Pin(id)
-  if not id or IsPinned(id) then return end
+  if not id or tContains(Pins, id) then return end
   if #Pins >= MAX_PINS then print("QuestQuarry: all " .. MAX_PINS .. " slots full, unpin one first"); return end
   tinsert(Pins, id)
 end
@@ -133,7 +124,7 @@ local function Gather()
 
   local quests, sel = {}, SelectedQuest()
   for _, id in ipairs(Pins) do if C_QuestLog.GetLogIndexForQuestID(id) then quests[#quests + 1] = id end end
-  if sel and not IsPinned(sel) and (DB.follow or Browsing()) then quests[#quests + 1] = sel end
+  if sel and not tContains(Pins, sel) and (DB.follow or Browsing()) then quests[#quests + 1] = sel end
   for _, qid in ipairs(quests) do
     local s = NewSection(seen, C_QuestLog.GetTitleForQuestID(qid) or ("Quest " .. qid), qid)
     GatherQuest(s, qid)
@@ -153,7 +144,7 @@ local function Header(i)
   h.pin:SetHighlightFontObject("GameFontNormalSmall")
   h.pin:SetScript("OnClick", function()
     if h.qid == "manual" then wipe(DB.targets); wipe(DB.items)
-    elseif IsPinned(h.qid) then Unpin(h.qid)
+    elseif tContains(Pins, h.qid) then tDeleteItem(Pins, h.qid)
     else Pin(h.qid) end
     GameTooltip:Hide()
     Build()
@@ -161,7 +152,7 @@ local function Header(i)
   h.pin:SetScript("OnEnter", function(s)
     GameTooltip:SetOwner(s, "ANCHOR_RIGHT")
     GameTooltip:SetText(h.qid == "manual" and "Clear manual targets"
-      or IsPinned(h.qid) and "Unpin this quest" or "Pin this quest")
+      or tContains(Pins, h.qid) and "Unpin this quest" or "Pin this quest")
     GameTooltip:Show()
   end)
   h.pin:SetScript("OnLeave", GameTooltip_Hide)
@@ -292,7 +283,7 @@ function Build()
     local h = headers[hi] or Header(hi)
     h.qid = s.qid or "manual"
     h.text:SetText(s.title)
-    h.pin:SetText((s.qid and not IsPinned(s.qid)) and "|cff33ff33+|r" or "|cffff3333x|r")
+    h.pin:SetText((s.qid and not tContains(Pins, s.qid)) and "|cff33ff33+|r" or "|cffff3333x|r")
     h:ClearAllPoints(); h:SetPoint("TOPLEFT", PAD, y); h:Show()
     y = y - 16
 
@@ -374,9 +365,7 @@ f:SetScript("OnEvent", function(_, e, arg)
     QuestQuarryPins = QuestQuarryPins or {}
     DB, Pins = QuestQuarryDB, QuestQuarryPins
     DB.targets, DB.items = DB.targets or {}, DB.items or {}
-    if DB.auto == nil then DB.auto = true end
-    if DB.mark == nil then DB.mark = true end
-    if DB.follow == nil then DB.follow = true end
+    for _, k in ipairs({ "auto", "mark", "follow" }) do if DB[k] == nil then DB[k] = true end end
     ApplyTab()
     if DB.pos then f:ClearAllPoints(); f:SetPoint(DB.pos[1], UIParent, DB.pos[2], DB.pos[3], DB.pos[4]) end
     if LibQuestieDB and LibQuestieDB.RequireContract and LibQuestieDB.RequireContract(4) then QDB = LibQuestieDB end
@@ -390,7 +379,7 @@ f:SetScript("OnEvent", function(_, e, arg)
       if PollSelection() or br ~= lastBrowse then lastBrowse = br; Queue() end
     end)
   elseif e == "QUEST_REMOVED" then
-    Unpin(arg); Queue()
+    tDeleteItem(Pins, arg); Queue()
   elseif e == "PLAYER_REGEN_ENABLED" then
     if pending then Build() end
   elseif e == "BAG_UPDATE_COOLDOWN" then

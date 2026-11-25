@@ -1,7 +1,7 @@
 ## Interface: 16001
 ## Title: QuestQuarry
 ## Author: Pwizzlard
-## Version: 1.0.3
+## Version: 1.0.4
 ## Notes: Target and quest item buttons for your selected quest
 ## OptionalDeps: QuestieDB, Questie
 ## SavedVariables: QuestQuarryDB

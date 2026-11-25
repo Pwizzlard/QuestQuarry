@@ -1,5 +1,3 @@
--- Auto data comes from QuestieDB (LibQuestieDB) when loaded; manual entries via /qq.
-
 local f = CreateFrame("Frame", "QuestQuarryFrame", UIParent, "BackdropTemplate")
 local DB, Pins, QDB
 local tBtns, iBtns, headers, pending, queued = {}, {}, {}, false, false
@@ -10,16 +8,13 @@ local GetItemIcon = C_Item and C_Item.GetItemIconByID or GetItemIcon
 local GetItemSpell = C_Item and C_Item.GetItemSpell or GetItemSpell
 local GetItemCooldown = C_Container and C_Container.GetItemCooldown or GetItemCooldown
 
-local Build -- forward
+local Build
 
--- "Selected" = whichever changed most recently: quest log selection or super-track
--- (clicking a quest in Questie's tracker super-tracks it without touching the log selection).
 local current, rawSel, rawSuper
 local function PollSelection()
   local s = C_QuestLog.GetSelectedQuest and C_QuestLog.GetSelectedQuest() or 0
   local t = C_SuperTrack and C_SuperTrack.GetSuperTrackedQuestID() or 0
   local changed = false
-  -- a new pick becomes current; deselecting the source of current clears it (box = pins only)
   if s ~= rawSel then
     if s ~= 0 then current = s elseif current == rawSel then current = nil end
     rawSel = s; changed = true
@@ -35,8 +30,6 @@ local function SelectedQuest()
   if current and C_QuestLog.GetLogIndexForQuestID(current) then return current end
 end
 
--- The unpinned "selected quest" preview only shows while you're looking at your quests,
--- so nothing appears on its own (Questie also moves the selection behind the scenes).
 local function Browsing()
   for _, fr in pairs({ QuestLogExFrame, ClassicQuestLog, QuestLogFrame, WorldMapFrame }) do
     if fr:IsShown() then return true end
@@ -58,7 +51,6 @@ local function Pin(id)
   tinsert(Pins, id)
 end
 
--- One section = {title, qid, targets, items}. `seen` is shared so a mob/item shows once overall.
 local function NewSection(seen, title, qid)
   local s = { title = title, qid = qid, targets = {}, items = {}, turnin = {} }
   function s.T(name, turnin)
@@ -69,7 +61,7 @@ local function NewSection(seen, title, qid)
   function s.I(id, auto)
     id = tonumber(id)
     if not id or seen[id] or GetItemCount(id) == 0 then return end
-    if auto and not GetItemSpell(id) then return end -- auto items: only ones with a "Use:"
+    if auto and not GetItemSpell(id) then return end
     seen[id] = true; s.items[#s.items + 1] = id
   end
   return s
@@ -80,7 +72,7 @@ local function GatherQuest(s, qid)
   local objs = C_QuestLog.GetQuestObjectives(qid) or {}
   local allDone = #objs > 0
   for _, o in ipairs(objs) do if not o.finished then allDone = false end end
-  local function done(name) -- a finished objective line mentions this name
+  local function done(name)
     for _, o in ipairs(objs) do
       if o.finished and o.text and o.text:find(name, 1, true) then return true end
     end
@@ -88,29 +80,29 @@ local function GatherQuest(s, qid)
 
   local q = QDB and QDB.Quest.objectives(qid)
   local complete = allDone or (C_QuestLog.IsComplete and C_QuestLog.IsComplete(qid))
-  if complete then -- swap mob rows for the turn-in NPC
+  if complete then
     local fin = QDB and QDB.Quest.finishedBy(qid)
     for _, npc in ipairs(fin and fin[1] or {}) do T(QDB.Npc.name(npc), true) end
   else
     if q then
-      for _, c in ipairs(q[1] or {}) do -- kill objectives
+      for _, c in ipairs(q[1] or {}) do
         local n = QDB.Npc.name(c[1])
         if n and not done(n) then T(n) end
       end
-      for _, it in ipairs(q[3] or {}) do -- loot objectives -> mobs that drop it
+      for _, it in ipairs(q[3] or {}) do
         local iname = QDB.Item.name(it[1])
         if not (iname and done(iname)) then
           for k, npc in ipairs(QDB.Item.npcDrops(it[1]) or {}) do
-            if k > 4 then break end -- ponytail: first 4 droppers; filter by zone if wrong mobs show
+            if k > 4 then break end
             T(QDB.Npc.name(npc))
           end
         end
       end
-      for _, kc in ipairs(q[5] or {}) do -- kill-credit objectives
+      for _, kc in ipairs(q[5] or {}) do
         local n = QDB.Npc.name(kc[2])
         if n and not done(kc[3] or n) then T(n) end
       end
-    else -- no Questie: parse "0/10 Kobold Vermin slain" style lines (English client)
+    else
       for _, o in ipairs(objs) do
         if o.type == "monster" and not o.finished and o.text then
           T((o.text:gsub("%d+/%d+", ""):gsub(":", ""):gsub(" slain", ""):match("^%s*(.-)%s*$")))
@@ -119,7 +111,7 @@ local function GatherQuest(s, qid)
     end
   end
 
-  if q then for _, sp in ipairs(q[6] or {}) do I(sp[3], true) end end -- "use item on X" objectives
+  if q then for _, sp in ipairs(q[6] or {}) do I(sp[3], true) end end
   if QDB then
     I(QDB.Quest.sourceItemId(qid), true)
     for _, id in ipairs(QDB.Quest.requiredSourceItems(qid) or {}) do I(id, true) end
@@ -208,16 +200,12 @@ local function ItemButton(i)
   return b
 end
 
--- "Next quest enemy" buttons. The secure snippet advances the list so it keeps cycling in
--- combat; the list itself is refreshed out of combat by Build.
 local CYCLE_SNIPPET = [[
   local n = self:GetAttribute("count") or 0
-  if n == 0 then self:SetAttribute("macrotext", "/targetenemy") return end -- no quest mobs: normal Tab
-  if down then -- advance once per press (down + up both arrive)
+  if n == 0 then self:SetAttribute("macrotext", "/targetenemy") return end
+  if down then
     local i = (self:GetAttribute("idx") or 0) % n + 1
     self:SetAttribute("idx", i)
-    -- start at the next name; if nothing (alive) was found, fall through to the following ones,
-    -- as many as fit in WoW's 255-character macro limit
     local tail = "\n/cleartarget [dead]" .. self:GetAttribute("suffix")
     local m = "/cleartarget\n/targetexact " .. self:GetAttribute("name" .. i)
     for k = 1, n - 1 do
@@ -237,13 +225,11 @@ local function CycleButton(name, parent)
   return b
 end
 
--- Invisible one for Tab / the keybind (on UIParent so it works even when the box is hidden).
 local cyc = CycleButton("QuestQuarryCycle", UIParent)
 cyc:SetSize(1, 1)
 cyc:SetPoint("CENTER")
 cyc:EnableMouse(false)
 
--- Clickable one on the box.
 local nextBtn = CycleButton("QuestQuarryNext", f)
 nextBtn:SetSize(80, 16)
 nextBtn:SetPoint("TOPRIGHT", f, "BOTTOMRIGHT", -4, 2)
@@ -251,9 +237,6 @@ nextBtn:SetNormalFontObject("GameFontHighlightSmall")
 nextBtn:SetHighlightFontObject("GameFontNormalSmall")
 nextBtn:SetText("Next target >")
 
--- After a press (out of combat only: attributes are locked in combat), make the next press start
--- right after the name just found, so it alternates between nearby quest mobs instead of
--- re-finding the same one while the rotation walks through names that aren't around.
 for _, b in ipairs({ cyc, nextBtn }) do
   b:HookScript("OnClick", function(s)
     if InCombatLockdown() or not UnitExists("target") then return end
@@ -270,7 +253,6 @@ end
 BINDING_HEADER_QUESTQUARRY = "QuestQuarry"
 _G["BINDING_NAME_CLICK QuestQuarryCycle:LeftButton"] = "Target next quest enemy"
 
--- Checkbox: temporarily point Tab at the cycle button (override binding; saved keybinds untouched).
 local function ApplyTab()
   ClearOverrideBindings(cyc)
   if DB.tab then SetOverrideBindingClick(cyc, true, "TAB", "QuestQuarryCycle", "LeftButton") end
@@ -300,7 +282,6 @@ local function RefreshItems()
   end
 end
 
--- Secure buttons can't change in combat, so rebuilds wait for PLAYER_REGEN_ENABLED.
 function Build()
   if InCombatLockdown() then pending = true; return end
   pending = false
@@ -318,7 +299,7 @@ function Build()
     for _, name in ipairs(s.targets) do
       ti = ti + 1
       local b = tBtns[ti] or TargetButton(ti)
-      local turnin = s.turnin[name] -- friendly turn-in NPC: no skull, not in the cycle
+      local turnin = s.turnin[name]
       if not turnin then
         ci = ci + 1
         cyc:SetAttribute("name" .. ci, name); nextBtn:SetAttribute("name" .. ci, name)
@@ -358,7 +339,7 @@ function Build()
   RefreshItems()
 end
 
-local function Queue() -- QUEST_LOG_UPDATE is spammy; coalesce
+local function Queue()
   if queued then return end
   queued = true
   C_Timer.After(0.3, function() queued = false; Build() end)
@@ -403,13 +384,12 @@ f:SetScript("OnEvent", function(_, e, arg)
       "QUEST_WATCH_LIST_CHANGED", "BAG_UPDATE_DELAYED", "BAG_UPDATE_COOLDOWN", "PLAYER_REGEN_ENABLED" }) do
       pcall(f.RegisterEvent, f, ev)
     end
-    -- Quest log selection has no reliable event/hook on this client, so watch it (cheap compare).
     local lastBrowse
     C_Timer.NewTicker(0.25, function()
       local br = Browsing()
       if PollSelection() or br ~= lastBrowse then lastBrowse = br; Queue() end
     end)
-  elseif e == "QUEST_REMOVED" then -- turned in / abandoned: free the slot
+  elseif e == "QUEST_REMOVED" then
     Unpin(arg); Queue()
   elseif e == "PLAYER_REGEN_ENABLED" then
     if pending then Build() end

@@ -232,6 +232,7 @@ for _, b in ipairs({ cyc, nextBtn }) do
   b:HookScript("OnClick", function(s)
     if InCombatLockdown() or not UnitExists("target") then return end
     local name = UnitName("target")
+    if issecretvalue and issecretvalue(name) then return end
     for i = 1, s:GetAttribute("count") or 0 do
       if s:GetAttribute("name" .. i) == name then
         cyc:SetAttribute("idx", i); nextBtn:SetAttribute("idx", i)
@@ -396,6 +397,7 @@ SlashCmdList.QUESTQUARRY = function(msg)
   local id = tonumber(arg:match("item:(%d+)") or arg)
   if cmd == "add" then
     if arg == "" then arg = UnitName("target") or "" end
+    if issecretvalue and issecretvalue(arg) then print("QuestQuarry: can't read that name here, type it: /qq add Name"); arg = "" end
     for name in arg:gmatch("[^,]+") do
       name = name:match("^%s*(.-)%s*$")
       if name ~= "" then tinsert(DB.targets, name) end
